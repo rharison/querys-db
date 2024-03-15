@@ -1,0 +1,19 @@
+SET lc_time TO 'pt_BR.UTF-8'; // Para retornar o mês em Português
+
+WITH dates AS (
+    SELECT generate_series(
+        '2023-01-01',
+        '2023-12-31',
+        '1 month'::interval
+    ) as month
+) // Definindo range de meses/ano;
+
+SELECT
+    to_char(dates.month, 'TMMonth') || '/' || EXTRACT(YEAR FROM dates.month) AS mes_ano,
+    COALESCE(SUM(ip.qtd * ip.lance_final_unit), 0) AS valorTotalParticipado,
+    COALESCE(SUM(CASE WHEN ip.resultado = 'V' THEN (ip.qtd * ip.lance_final_unit) ELSE 0 END), 0) AS valorTotalVencedor
+FROM dates
+LEFT JOIN item_processo ip ON date_trunc('month', ip.created_at) = dates.month 
+GROUP BY dates.month
+ORDER BY dates.month;
+
